@@ -1,0 +1,5 @@
+package com.beginner.BootBatchExample.config;
+
+public class JobCompletionNotificationImpl {
+
+}

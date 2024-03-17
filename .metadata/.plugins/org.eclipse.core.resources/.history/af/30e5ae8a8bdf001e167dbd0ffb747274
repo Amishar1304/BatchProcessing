@@ -1,0 +1,138 @@
+package com.beginner.BootBatchExample.config;
+
+import javax.sql.DataSource;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
+import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.data.RepositoryItemWriter;
+import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.LineMapper;
+import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
+import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
+import org.springframework.batch.item.file.mapping.DefaultLineMapper;
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import com.beginner.BootBatchExample.entity.Product;
+import com.beginner.BootBatchExample.repo.ProductRepository;
+
+import lombok.AllArgsConstructor;
+
+@Configuration
+@EnableBatchProcessing
+@AllArgsConstructor
+public class BatchConfig {
+	@Autowired
+	private ProductRepository productRepository;
+	
+	private JobBuilderFactory jobBuilderFactory;
+	private StepBuilderFactory stepBuilderFactory;
+	
+//READER
+	@Bean
+	public FlatFileItemReader<Product> productReader() {
+		FlatFileItemReader<Product> itemReader = new FlatFileItemReader<>();
+		itemReader.setResource(new FileSystemResource("src/main/resources/data.csv"));
+		itemReader.setName("Item-reader");
+		itemReader.setLinesToSkip(1);
+		itemReader.setLineMapper(lineMapper());
+		return itemReader;
+	}
+
+	// MAPPER
+
+	private LineMapper<Product> lineMapper() {
+
+		DefaultLineMapper<Product> lineMapper = new DefaultLineMapper<>();
+
+		DelimitedLineTokenizer lineTokenizer = new DelimitedLineTokenizer();
+		lineTokenizer.setDelimiter(",");
+		lineTokenizer.setStrict(false);
+		lineTokenizer.setNames("productId", "title", "description", "price", "discount");
+
+		BeanWrapperFieldSetMapper<Product> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
+		fieldSetMapper.setTargetType(Product.class);
+
+		lineMapper.setLineTokenizer(lineTokenizer);
+		lineMapper.setFieldSetMapper(fieldSetMapper);
+
+		return lineMapper;
+	}
+
+//PROCESSOR
+	@Bean
+	public ItemProcessor<Product, Product> itemProcessor() {
+		return new CustomItemProcessor();
+	}
+
+//WRITER
+	@Bean
+	public RepositoryItemWriter<Product> itemWriter() {
+		RepositoryItemWriter<Product> writer = new RepositoryItemWriter<Product>();
+		writer.setRepository(productRepository);
+		writer.setMethodName("save");
+		return writer;
+	}
+
+	// STEP
+//
+//	@Bean
+//	public Step steps(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+//		return new StepBuilder("jobStep", jobRepository)
+//				.<Product, Product>chunk(5, transactionManager)
+//				.reader(productReader())
+//				.processor(itemProcessor())
+//				.writer(itemWriter())
+//				.build();
+//	}
+	
+
+	//JOB
+//	public Job job(JobRepository jobrepository, PlatformTransactionManager transactionManager) {
+//		return new JobBuilder("csv-job", jobrepository)
+//				.flow(steps(jobrepository, transactionManager))
+//				.end()
+//				.build();
+//	}
+	
+	
+	public Step step() {
+		return stepBuilderFactory.get("step-1").<Product, Product>chunk(10)
+						  .reader(productReader())
+						  .processor(itemProcessor())
+						  .writer(itemWriter())
+						  
+						  .build();
+	}
+	
+	@Bean
+//	public Job job() {
+//		return jobBuilderFactory.get("Product-import")
+//								.flow(step())
+//								.end()
+//								.build();
+//	
+//	}
+	public Job job(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return jobBuilderFactory.get("csv-job")
+                .flow(step(jobRepository, transactionManager))
+                .end()
+                .build();
+	
+
+}

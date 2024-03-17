@@ -1,0 +1,5 @@
+package com.beginner.BootBatchExample.entity;
+
+public class Customer {
+
+}

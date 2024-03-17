@@ -1,0 +1,5 @@
+package com.beginner.BootBatchExample.repository;
+
+public class CustomerRepository {
+
+}

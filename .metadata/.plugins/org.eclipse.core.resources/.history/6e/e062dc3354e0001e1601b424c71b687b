@@ -1,0 +1,15 @@
+package com.beginner.BootBatchExample.config;
+
+import org.springframework.batch.item.ItemProcessor;
+
+import com.beginner.BootBatchExample.entity.Product;
+
+public class CustomItemProcessor implements ItemProcessor<Product, Product> {
+
+	@Override
+	public Product process(Product item) throws Exception {
+
+		return item;
+	}
+
+}

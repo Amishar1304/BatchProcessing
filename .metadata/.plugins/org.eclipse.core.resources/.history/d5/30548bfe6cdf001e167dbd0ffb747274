@@ -1,0 +1,5 @@
+package com.beginner.BootBatchExample.repo;
+
+public class ProductRepository {
+
+}

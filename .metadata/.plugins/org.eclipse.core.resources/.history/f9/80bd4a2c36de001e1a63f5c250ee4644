@@ -1,0 +1,7 @@
+package com.beginner.BootBatchExample.config;
+
+import org.springframework.batch.core.JobExecutionListener;
+
+public class JobCompletionNotificationImpl implements JobExecutionListener  {
+
+}

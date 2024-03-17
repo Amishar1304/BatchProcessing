@@ -1,0 +1,20 @@
+package com.beginner.BootBatchExample.config;
+
+import org.springframework.batch.item.ItemProcessor;
+
+import com.beginner.BootBatchExample.entity.Product;
+
+public class CustomItemProcessor implements ItemProcessor<Product, Product> {
+
+	@Override
+	public Product process(Product item) throws Exception {
+		System.out.println(item.getDescription());
+		int discountper=Integer.parseInt(item.getDiscount());
+		double originalPrice=Double.parseDouble(item.getDiscount());
+		double discount=(discountper/100)*originalPrice;
+		double finalPrice=originalPrice-discount;
+		item.setDiscountedPrice(String.valueOf(finalPrice));
+		return item;
+	}
+
+}
